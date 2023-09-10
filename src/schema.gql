@@ -2,13 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Auth {
-  """
-  Example field (placeholder)
-  """
-  exampleField: Int!
-}
-
 type LogoutResponse {
   loggedOut: Boolean!
 }
@@ -17,11 +10,10 @@ type Mutation {
   logout(id: Int!): LogoutResponse!
   signIn(signInInput: SignInInput!): SignResponse!
   signUp(signUpInput: SignUpInput!): SignResponse!
-  updateAuth(updateAuthInput: UpdateAuthInput!): Auth!
 }
 
 type Query {
-  auth(id: Int!): Auth!
+  sayHello: String!
 }
 
 input SignInInput {
@@ -39,13 +31,6 @@ input SignUpInput {
   email: String!
   password: String!
   username: String!
-}
-
-input UpdateAuthInput {
-  email: String
-  id: Int!
-  password: String
-  username: String
 }
 
 type User {

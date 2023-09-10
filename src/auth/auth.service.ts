@@ -1,13 +1,12 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { SignUpInput } from './dto/signup-input';
-import { UpdateAuthInput } from './dto/update-auth.input';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { SignUpInput } from './dto/signup-input';
 import { SignInInput } from './dto/signin-input';
-import { LogoutResponse } from './dto/logout-response';
 import { SignResponse } from './dto/sign-response';
+import { LogoutResponse } from './dto/logout-response';
 
 @Injectable()
 export class AuthService {
@@ -70,16 +69,13 @@ export class AuthService {
     return { accessToken, refreshToken, user };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+  async logout(userId: number): Promise<LogoutResponse> {
+    await this.prisma.user.updateMany({
+      where: { id: userId, hashedRefreshToken: { not: null } },
+      data: { hashedRefreshToken: null },
+    });
 
-  update(id: number, updateAuthInput: UpdateAuthInput) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    return { loggedOut: true };
   }
 
   async createTokens(userId: number, email: string) {
@@ -110,14 +106,5 @@ export class AuthService {
       where: { id: userId },
       data: { hashedRefreshToken },
     });
-  }
-
-  async logout(userId: number): Promise<LogoutResponse> {
-    await this.prisma.user.updateMany({
-      where: { id: userId, hashedRefreshToken: { not: null } },
-      data: { hashedRefreshToken: null },
-    });
-
-    return { loggedOut: true };
   }
 }
