@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { SignUpInput } from './dto/signup-input';
 import { UpdateAuthInput } from './dto/update-auth.input';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon from 'argon2';
+import { SignInInput } from './dto/signin-input';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +16,14 @@ export class AuthService {
   ) {}
 
   async signUp(signUpInput: SignUpInput) {
+    const userWithSameEmail = await this.prisma.user.findUnique({
+      where: { email: signUpInput.email },
+    });
+
+    if (userWithSameEmail) {
+      throw new ForbiddenException('User with this email already exists');
+    }
+
     const user = await this.prisma.user.create({
       data: {
         username: signUpInput.username,
@@ -32,8 +41,31 @@ export class AuthService {
     return { accessToken, refreshToken, user };
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async signIn(signInInput: SignInInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: signInInput.email },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('User with this email does not exist');
+    }
+
+    const doPasswordsMatch = await argon.verify(
+      user.hashedPassword,
+      signInInput.password,
+    );
+
+    if (!doPasswordsMatch) {
+      throw new ForbiddenException('Password is incorrect');
+    }
+
+    const { accessToken, refreshToken } = await this.createTokens(
+      user.id,
+      user.email,
+    );
+
+    await this.updateRefreshToken(user.id, refreshToken);
+    return { accessToken, refreshToken, user };
   }
 
   findOne(id: number) {
