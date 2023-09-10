@@ -6,6 +6,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon from 'argon2';
 import { SignInInput } from './dto/signin-input';
+import { LogoutResponse } from './dto/logout-response';
+import { SignResponse } from './dto/sign-response';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +17,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async signUp(signUpInput: SignUpInput) {
+  async signUp(signUpInput: SignUpInput): Promise<SignResponse> {
     const userWithSameEmail = await this.prisma.user.findUnique({
       where: { email: signUpInput.email },
     });
@@ -41,7 +43,7 @@ export class AuthService {
     return { accessToken, refreshToken, user };
   }
 
-  async signIn(signInInput: SignInInput) {
+  async signIn(signInInput: SignInInput): Promise<SignResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: signInInput.email },
     });
@@ -108,5 +110,14 @@ export class AuthService {
       where: { id: userId },
       data: { hashedRefreshToken },
     });
+  }
+
+  async logout(userId: number): Promise<LogoutResponse> {
+    await this.prisma.user.updateMany({
+      where: { id: userId, hashedRefreshToken: { not: null } },
+      data: { hashedRefreshToken: null },
+    });
+
+    return { loggedOut: true };
   }
 }
