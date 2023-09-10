@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id                 Int      @id @default(autoincrement())
-  name               String
+  username           String
   email              String
   hashedPassword     String
   hashedRefreshToken String?
