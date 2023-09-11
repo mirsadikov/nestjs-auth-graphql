@@ -5,6 +5,7 @@ import { SignUpInput } from './dto/signup-input';
 import { SignInInput } from './dto/signin-input';
 import { SignResponse } from './dto/sign-response';
 import { LogoutResponse } from './dto/logout-response';
+import { Public } from './decorators/public.decorator';
 
 @Resolver(() => User)
 export class AuthResolver {
@@ -15,11 +16,13 @@ export class AuthResolver {
     return 'Hello World!';
   }
 
+  @Public()
   @Mutation(() => SignResponse)
   signUp(@Args('signUpInput') signUpInput: SignUpInput) {
     return this.authService.signUp(signUpInput);
   }
 
+  @Public()
   @Mutation(() => SignResponse)
   signIn(@Args('signInInput') signInInput: SignInInput) {
     return this.authService.signIn(signInInput);
