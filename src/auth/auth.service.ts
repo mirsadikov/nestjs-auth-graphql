@@ -78,7 +78,7 @@ export class AuthService {
     return { loggedOut: true };
   }
 
-  async createTokens(userId: number, email: string) {
+  createTokens(userId: number, email: string) {
     const accessToken = this.jwtService.sign(
       { userId, email },
       {
@@ -106,5 +106,30 @@ export class AuthService {
       where: { id: userId },
       data: { hashedRefreshToken },
     });
+  }
+
+  async getNewTokens(userId: number, refreshToken: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('User does not exist');
+    }
+
+    const doRefreshTokensMatch = await argon.verify(
+      user.hashedRefreshToken,
+      refreshToken,
+    );
+
+    if (!doRefreshTokensMatch) {
+      throw new ForbiddenException('Refresh token is invalid');
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.createTokens(user.id, user.email);
+
+    await this.updateRefreshToken(user.id, newRefreshToken);
+    return { accessToken, refreshToken: newRefreshToken, user };
   }
 }
